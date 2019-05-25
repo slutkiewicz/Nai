@@ -58,35 +58,40 @@ list<node*> A_Star(node* start,node* goal )
 
             if (it == closedSet.end())  // if not found
             {
+                if (related.first->AVAILABLE) {
 
-                if(related.first->id!=goal->id)
-                {
+                    if (related.first->id != goal->id) {
 
-                    g_Map.insert(pair<node*,int> (related.first,g_Map.at(current)+related.second));
-                    h_Map.insert(pair<node*,int> (related.first,get_heur_value(goal,related.first)));
+                        g_Map.insert(pair<node *, int>(related.first, g_Map.at(current) + related.second));
+                        h_Map.insert(pair<node *, int>(related.first, get_heur_value(goal, related.first)));
 
-                    f_Map.insert(pair<node*,int> (related.first,g_Map.at(related.first)+h_Map.at(related.first)));
+                        f_Map.insert(
+                                pair<node *, int>(related.first, g_Map.at(related.first) + h_Map.at(related.first)));
 
 
-                    auto it = find(openSet.begin(), openSet.end(), related.first);
+                        auto it = find(openSet.begin(), openSet.end(), related.first);
 
-                    if(it == openSet.end() )
-                    {      cameFrom.insert({related.first,current});
+                        if (it == openSet.end()) {
+                            cameFrom.insert({related.first, current});
 
+                            openSet.push_back(related.first);
+                        } else
+                            continue;
+
+                    } else {
+                        f_Map.insert({related.first, 0});
+
+                        cameFrom.insert({related.first, current});
                         openSet.push_back(related.first);
+                        break;
                     }
-                    else
-                        continue;
 
                 }
                 else
-                {   f_Map.insert({related.first,0});
-
-                    cameFrom.insert({related.first,current});
-                    openSet.push_back(related.first);
-                    break;
+                {
+                    closedSet.push_back(related.first);
+                    continue;
                 }
-
             }
             else
                 continue;

@@ -37,4 +37,5 @@ std::vector<related_n> related_nodes;  //edge value
 
 std::list<node*> reconstruct_path(node* start,node* goal,std::map<node*,node*> cameFrom);
 int get_heur_value(node *end_point,node *node);
+
 std::list<node*> A_Star(node* start,node* goal );

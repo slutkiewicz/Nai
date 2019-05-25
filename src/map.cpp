@@ -1,6 +1,6 @@
 
 /**
- * This is the simple hello world for SDL2.
+ * This is the simple astar world with SDL2.
  * 
  * You need C++14 to compile this.
  */
@@ -23,6 +23,9 @@
 #include <thread>
 #include <tuple>
 #include <vector>
+#include <stdlib.h>     /* srand, rand */
+#include <time.h>       /* time */
+
 #include "map.h"
 
 #define errcheck(e)                                                            \
@@ -40,16 +43,34 @@ int main(int, char **) {
   using namespace std;
   using namespace std::chrono;
 
+
+
+    srand (time(NULL));
+
+    list<node*> node_list;
+
   auto hardware = init_hardware_subsystems(640, 480, false);
   auto level = load_level();    //game state
-    cout<<level.world->t.at(0).size()<<endl;
+
   // auto dt = 15ms;
-  milliseconds dt(15);
+  milliseconds dt(85);
+
+    auto start_node=level.world->nodes_Map.at({3,3});
+    auto goal_node=level.world->nodes_Map.at({17,5});
+
+   node_list= A_Star(&start_node, &goal_node );
+
+   level.players.begin()->intention=position_mapper(node_list);
 
   steady_clock::time_point current_time = steady_clock::now();
   for (bool game_active = true; game_active;) {
 
 
+          if(level.players.begin()->intention.empty())
+          {
+              position_t goal={rand() % 18 + 1,rand() % 8 + 1};
+              level.players.begin()->intention=position_mapper(A_Star(node_mapper(level.players.begin()->position,level),node_mapper(goal,level)));
+          }
 
     auto intentions = process_input(
         hardware,
@@ -111,9 +132,7 @@ game_state_t load_level() {
 
     std::pair<int,int>  deltas[] = {{-1,0} ,{0,-1},{0,1},{1,0}};
 
-    game_state.players.push_back({.position = {3, 3},
-                                         .intention = {0, 0},
-                                         .texture = nullptr});
+    game_state.players.push_back({{3, 3},nullptr});
     // ładowanie mapy
     game_state.world = std::make_shared<game_map_t>();
     std::ifstream t("data/level1.txt"); // załadujmy plik
@@ -141,18 +160,16 @@ game_state_t load_level() {
             }
         }
     }
-    for(auto node : game_state.world->nodes_Map){
+    for(auto &node : game_state.world->nodes_Map){
 
         for(auto p : deltas)
         {
 
-            auto it = game_state.world->nodes_Map.find({node.first.at(0)+p.first,
-                                                        node.first.at(1)+p.second});
+            auto it = game_state.world->nodes_Map.find({(node.first.at(0)+p.first),
+                                                        (node.first.at(1)+p.second)});
 
             if (it != game_state.world->nodes_Map.end())
-                node.second.related_nodes.
-                        //insert(pair<node* ,int> (it->second,1));
-                        emplace_back(&it->second,1);
+                node.second.related_nodes.emplace_back(&it->second,1);
 
         }
 
@@ -165,14 +182,14 @@ game_state_t load_level() {
  * @brief przetwarzanie wszystkich zdarzeń oraz pobieranie "intencji" ruchu
  * poszczególnych graczy
  */
-std::map<int, player_intention_t>
+std::map<int, position_t>
 process_input(std::shared_ptr<hardware_objects_t> hw,
               std::map<event_enum, std::function<void()>> event_handlers) {
 
-    std::map<SDL_Scancode, std::function<std::pair<int, player_intention_t>()>>
+    std::map<SDL_Scancode, std::function<std::pair<int, position_t>()>>
             keyboard_mapping;
 
-    std::map<int, player_intention_t> intentions;
+    std::map<int, position_t> intentions;
     // pobranie zdarzen sdl
     SDL_Event event;
     while (SDL_PollEvent(&event)) { // pętla sprawdzająca wszystkie zdarzenia
@@ -199,17 +216,21 @@ process_input(std::shared_ptr<hardware_objects_t> hw,
  */
 game_state_t
 calculate_next_game_state(const game_state_t &previous_state,
-                          std::map<int, player_intention_t> intentions,
+                          std::map<int, position_t> intentions,
                           double dt) {
     game_state_t ret = previous_state;
+
     // przetwarzamy intencje (o ile jakieś są)
     for (auto &player : ret.players) {
-        player.intention = {0, 0};
+
+
+        if(!player.intention.empty()) {
+            player.position = player.intention.back();
+
+            player.intention.pop_back();
+        }
     }
-    for (auto &intent : intentions) {
-        if (intent.first < ret.players.size())
-            ret.players[intent.first].intention = intent.second;
-    }
+
 
 
     ret.frame++;
@@ -270,6 +291,22 @@ void draw_world(SDL_Renderer *renderer, game_state_t &state) {
     SDL_RenderPresent(renderer); // wyswietlenie backbufora
 }
 
+
+node* node_mapper(position_t cords,game_state_t gameState)
+{
+    return &gameState.world->nodes_Map.at(cords);
+
+}
+std::list<position_t> position_mapper(std::list<node*> nodes)
+{
+    std::list<position_t> ret;
+
+    for(auto node : nodes )
+    {
+           ret.push_back(node->position);
+    }
+    return ret;
+}
 
 
 

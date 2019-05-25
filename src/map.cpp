@@ -1,131 +1,39 @@
+
 /**
  * This is the simple hello world for SDL2.
- *
+ * 
  * You need C++14 to compile this.
  */
 
 #include <SDL2/SDL.h>
-#include <array>
 #include <chrono>
 #include <cstdint>
-#include <fstream>
-#include <functional>
 #include <iostream>
-#include <iterator>
-#include <lodepng.h>
-#include <map>
 #include <memory>
 #include <set>
-#include <sstream>
 #include <stdexcept>
-#include <streambuf>
 #include <string>
 #include <thread>
 #include <tuple>
 #include <vector>
-#include <a_star.cpp>
+#include <array>
+#include "a_star.cpp"
+#include "map.h"
+
 
 // check for errors
-#define errcheck(e)                                                            \
-  {                                                                            \
-    if (e)                                                                     \
-      throw std::invalid_argument(SDL_GetError());                             \
+#define errcheck(e)                   \
+  {                                   \
+    if (e)                            \
+    {                                 \
+      cout << SDL_GetError() << endl; \
+      SDL_Quit();                     \
+      return -1;                      \
+    }                                 \
   }
 
-namespace gameengine {
-using namespace std; // only in this namespace!!
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////     STAŁE GRY                    //////////////////////////
-///////////////////////////////////////////////////////////////////////////////
 
 const int tile_size[] = {32, 32};
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////     STRUKTURY                    //////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-using position_t = std::array<double, 2>;
-
-enum event_enum { NONE, QUIT };
-
-struct player_intention_t {
-  position_t move;
-};
-
-struct player_t {
-  position_t acceleration;
-  position_t velocity;
-  position_t position;
-  player_intention_t intention;
-
-  std::shared_ptr<SDL_Texture> texture;
-};
-
-struct game_map_t {
-  std::vector<std::string> t; // opis kafelkow
-  // # przeszkoda
-  // . puste pole
-  // , ziemia
-};
-
-struct game_state_t {
-  // gracze
-  std::vector<player_t> players;
-  // aktualna klatka
-  int frame;
-
-  shared_ptr<game_map_t> world;
-};
-
-
-vector<node> node_Map(){
-
-  
-}
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////   PRZECIĄŻONE OPERATORY          //////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-position_t operator/(const position_t &e, double s) {
-  return {e[0] / s, e[1] / s};
-}
-
-position_t operator*(const position_t &e, double s) {
-  return {e[0] * s, e[1] * s};
-}
-
-position_t operator+(const position_t &e, const position_t &s) {
-  return {e[0] + s[0], e[1] + s[1]};
-}
-
-position_t operator-(const position_t &e, const position_t &s) {
-  return {e[0] - s[0], e[1] - s[1]};
-}
-
-position_t operator*(const position_t &e, const position_t &s) {
-  return {e[0] * s[0], e[1] * s[1]};
-}
-
-/**
- * @brief Długość wektora
- */
-double operator~(const position_t &e) {
-  return std::sqrt(e[0] * e[0] + e[1] * e[1]);
-}
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////   FUNKCJE                        //////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-struct hardware_objects_t {
-  SDL_Renderer *renderer;
-  SDL_Window *window;
-};
-
-
-
-
 
 /**
  * @brief przygotowanie renderera - na tym bedziemy rysowali
@@ -159,33 +67,6 @@ shared_ptr<hardware_objects_t> init_hardware_subsystems(int width, int height,
     delete o;
   });
 }
-
-/**
- * @brief Ładuje teksturę z pliku png
- *
- */
-std::shared_ptr<SDL_Texture> load_texture(SDL_Renderer *renderer,
-                                          const std::string fname) {
-  // SDL_Surface *bmp = SDL_LoadBMP( fname.c_str() );
-  std::vector<unsigned char> image;
-  unsigned width, height;
-  errcheck(lodepng::decode(image, width, height, fname));
-
-  SDL_Surface *bitmap = SDL_CreateRGBSurfaceWithFormat(0, width, height, 32,
-                                                       SDL_PIXELFORMAT_RGBA32);
-  std::copy(image.begin(), image.end(), (unsigned char *)bitmap->pixels);
-  errcheck(bitmap == nullptr);
-
-  SDL_Texture *tex = SDL_CreateTextureFromSurface(renderer, bitmap);
-
-  errcheck(tex == nullptr);
-  SDL_SetTextureBlendMode(tex, SDL_BLENDMODE_BLEND);
-  std::shared_ptr<SDL_Texture> texture(
-      tex, [](SDL_Texture *ptr) { SDL_DestroyTexture(ptr); });
-  SDL_FreeSurface(bitmap);
-  return texture;
-}
-
 /**
  * @brief Ładowanie planszy oraz przygotowanie obiektu gracza
  *
@@ -256,6 +137,7 @@ process_input(shared_ptr<hardware_objects_t> hw,
   return intentions;
 }
 
+
 /**
  * @brief Obliczenia fizyczne i obsluga wszelakich zdarzen w swiecie gry
  */
@@ -318,6 +200,7 @@ calculate_next_game_state(const game_state_t &previous_state,
   return ret;
 }
 
+
 /**
  * @brief Rysowanie gracza na ekranie
  *
@@ -328,6 +211,7 @@ void draw_player(SDL_Renderer *renderer, player_t &player) {
                    tile_size[0], tile_size[1]};
   SDL_RenderCopy(renderer, player.texture.get(), NULL, &rect);
 }
+
 
 /**
  * @brief Wyświetlenie wszystkiego
@@ -367,7 +251,6 @@ void draw_world(SDL_Renderer *renderer, game_state_t &state) {
   SDL_RenderPresent(renderer); // wyswietlenie backbufora
 }
 
-} // namespace gameengine
 
 int main(int, char **) {
   using namespace std;
@@ -397,3 +280,24 @@ int main(int, char **) {
 
   return 0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

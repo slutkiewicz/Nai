@@ -4,34 +4,15 @@
 #include <list>
 #include <algorithm>
 #include <map> 
-
 #include <cmath>
-using namespace std;
 
-using position_t = array<double, 2>;
+
+
+
+
+
 using related_n = pair<node*,int>;  //holding node + dist to it
-
-
-
-struct node {
-
-    node(){
-        id=counter();
-
-    }
-int id;    
-bool AVAILABLE;    
-double g,
-       h,
-       f;
-vector<related_n> related_nodes;  //edge value
-
-position_t position;
-
-
-};
-
-
+using position_t = array<int, 2>;
 ////////////////////---------FUNCTIONS--------////////////////////////
 
 

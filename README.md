@@ -1,8 +1,8 @@
 # Nai
-///////////BUILD\\\\\\\\\\\\\
+///////////BUILD\\\\\\\\\\\\\  
 
-$ mkdir build
-$ cd build
-$ cmake ..
-$ make
-$ ./astar
+$ mkdir build /n  
+$ cd build  
+$ cmake ..  
+$ make  
+$ ./astar  

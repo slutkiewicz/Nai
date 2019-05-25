@@ -1,7 +1,7 @@
 # Nai
 ///////////BUILD\\\\\\\\\\\\\  
 
-$ mkdir build /n  
+$ mkdir build   
 $ cd build  
 $ cmake ..  
 $ make  

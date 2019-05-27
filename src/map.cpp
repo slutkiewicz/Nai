@@ -35,7 +35,8 @@
   }
 
 
-const int tile_size[] = {32, 32};
+//const int tile_size[] = {32, 32};
+const int tile_size[] = {16, 16};
 
 
 
@@ -54,23 +55,58 @@ int main(int, char **) {
 
   // auto dt = 15ms;
   milliseconds dt(85);
-
+/*
     auto start_node=level.world->nodes_Map.at({3,3});
     auto goal_node=level.world->nodes_Map.at({17,5});
 
    node_list= A_Star(&start_node, &goal_node );
 
    level.players.begin()->intention=position_mapper(node_list);
-
+*/
   steady_clock::time_point current_time = steady_clock::now();
+    //cout<< level.world->t.at(1).size();
   for (bool game_active = true; game_active;) {
 
+      auto kstate = SDL_GetKeyboardState(NULL);
+      if (kstate[SDL_SCANCODE_G])
+      {
+          if(!(level.players.at(0).position.at(0)> (level.world->t.at(0).size()-2) ||
+                  level.players.at(0).position.at(1)> (level.world->t.size()-2) ||
+                  level.players.at(0).position.at(0)<1 ||
+                  level.players.at(0).position.at(1)<1))
+          {
+              node_list= A_Star(node_mapper(level.players.at(0).position,level),
+                                node_mapper(level.players.at(1).position,level) );
+              level.players.begin()->intention.clear();
+              level.players.begin()->intention=position_mapper(node_list);
+          }
 
+      }
+
+
+
+
+
+/*
           if(level.players.begin()->intention.empty())
           {
-              position_t goal={rand() % 18 + 1,rand() % 8 + 1};
+            int a=0,b=0;
+            cout<<"podaj x:"<<endl;
+            cin>>a;
+            cout<<"podaj y:"<<endl;
+            cin>> b;
+            if(a> (level.world->t.at(0).size()-2) || b> (level.world->t.size()-2) || a<1 ||b<1)
+            {
+                a=1;
+                b=1;
+            }
+
+              //position_t goal={rand() % 18 + 1,rand() % 8 + 1};
+              position_t goal={a,b};
               level.players.begin()->intention=position_mapper(A_Star(node_mapper(level.players.begin()->position,level),node_mapper(goal,level)));
+
           }
+*/
 
     auto intentions = process_input(
         hardware,
@@ -133,6 +169,7 @@ game_state_t load_level() {
     std::pair<int,int>  deltas[] = {{-1,0} ,{0,-1},{0,1},{1,0}};
 
     game_state.players.push_back({{3, 3},nullptr});
+    game_state.players.push_back({{1, 1},nullptr});
     // ładowanie mapy
     game_state.world = std::make_shared<game_map_t>();
     std::ifstream t("data/level1.txt"); // załadujmy plik
@@ -182,14 +219,14 @@ game_state_t load_level() {
  * @brief przetwarzanie wszystkich zdarzeń oraz pobieranie "intencji" ruchu
  * poszczególnych graczy
  */
-std::map<int, position_t>
+position_t
 process_input(std::shared_ptr<hardware_objects_t> hw,
               std::map<event_enum, std::function<void()>> event_handlers) {
 
     std::map<SDL_Scancode, std::function<std::pair<int, position_t>()>>
             keyboard_mapping;
 
-    std::map<int, position_t> intentions;
+    position_t intentions;
     // pobranie zdarzen sdl
     SDL_Event event;
     while (SDL_PollEvent(&event)) { // pętla sprawdzająca wszystkie zdarzenia
@@ -207,6 +244,18 @@ process_input(std::shared_ptr<hardware_objects_t> hw,
             event_handlers[evnt]();
     }
 
+
+    auto kstate = SDL_GetKeyboardState(NULL);
+    if (kstate[SDL_SCANCODE_LEFT])
+        intentions[0] -= 1;
+    if (kstate[SDL_SCANCODE_RIGHT])
+        intentions[0] += 1;
+    if (kstate[SDL_SCANCODE_UP])
+        intentions[1] -= 1;
+    if (kstate[SDL_SCANCODE_DOWN])
+        intentions[1] += 1;
+
+
     return intentions;
 }
 
@@ -216,13 +265,14 @@ process_input(std::shared_ptr<hardware_objects_t> hw,
  */
 game_state_t
 calculate_next_game_state(const game_state_t &previous_state,
-                          std::map<int, position_t> intentions,
+                          position_t intentions,
                           double dt) {
     game_state_t ret = previous_state;
-
+    intentions.at(0)+=ret.players.at(1).position.at(0);
+    intentions.at(1)+=ret.players.at(1).position.at(1);
+    ret.players.at(1).intention.push_back(intentions);
     // przetwarzamy intencje (o ile jakieś są)
     for (auto &player : ret.players) {
-
 
         if(!player.intention.empty()) {
             player.position = player.intention.back();
@@ -246,6 +296,8 @@ void draw_player(SDL_Renderer *renderer, player_t &player) {
     SDL_Rect rect = {((player.position.at(0) ) * tile_size[0]),
                      ((player.position.at(1) ) * tile_size[1]),
                      tile_size[0], tile_size[1]};
+
+
     SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
     SDL_RenderFillRect(renderer,&rect);
     //SDL_RenderCopy(renderer, player.texture.get(), NULL, &rect);
@@ -270,7 +322,6 @@ void draw_world(SDL_Renderer *renderer, game_state_t &state) {
                     break;
                 case ',':
                     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-
                     break;
                 default:
                     break;

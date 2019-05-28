@@ -56,7 +56,7 @@ int main(int, char **) {
 
 
     // auto dt = 15ms;
-    milliseconds dt(115);
+    milliseconds dt(15);
 
     steady_clock::time_point current_time = steady_clock::now();
 
@@ -361,7 +361,12 @@ calculate_next_game_state(const game_state_t &previous_state,
                         auto start=node.first;
 
                         ret.world->nodes_Map.at(player.position).map_events.at(PLAYER)=false;
-                        node.first->map_events.at(PLAYER)=true;
+                        player.position=node.first->position;
+                        ret.world->nodes_Map.at(player.position).map_events.at(PLAYER)=true;
+
+                        //node.first->map_events.at(PLAYER)=true;
+
+
                         player.intention.clear();
                         player.intention=position_mapper(A_Star(start,node_mapper(goal,&ret)));
                         break;

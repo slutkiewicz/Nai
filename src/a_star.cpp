@@ -58,7 +58,7 @@ list<node*> A_Star(node* start,node* goal )
 
             if (it == closedSet.end())  // if not found
             {
-                if (related.first->AVAILABLE) {
+                if (related.first->AVAILABLE()) {
 
                     if (related.first->id != goal->id) {
 

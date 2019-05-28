@@ -12,12 +12,13 @@
 
 int counter ();
 
+enum game_enum {PLAYER, NOTHING,WALL, GRASS , WATER , MARBLE , FIRE ,P1_GO, P2_GO , P3_GO  };
 
 
 using position_t = std::array<int, 2>;
 
 struct node {
-using related_n = std:: pair<node*,int>;  //holding node + dist to it
+using related_n = std:: pair<node*,int>;  //holding  reference + dist to it
 
 
     node(position_t position1){
@@ -25,9 +26,15 @@ using related_n = std:: pair<node*,int>;  //holding node + dist to it
         id=counter();
     }
     int id;
-    bool AVAILABLE;
+
     position_t position;
 
+    std::map<game_enum,bool> map_events;
+
+    bool AVAILABLE(){
+        return !(map_events.at(WALL)
+                 || map_events.at(PLAYER));
+    }
 
 std::vector<related_n> related_nodes;  //edge value
 
@@ -36,6 +43,7 @@ std::vector<related_n> related_nodes;  //edge value
 
 
 std::list<node*> reconstruct_path(node* start,node* goal,std::map<node*,node*> cameFrom);
+
 int get_heur_value(node *end_point,node *node);
 
 std::list<node*> A_Star(node* start,node* goal );

@@ -31,12 +31,25 @@ using related_n = std:: pair<node*,int>;  //holding  reference + dist to it
 
     std::map<game_enum,bool> map_events;
 
+    std::vector<related_n> related_nodes;  //edge value
+
     bool AVAILABLE(){
         return !(map_events.at(WALL)
                  || map_events.at(PLAYER));
     }
+    int CALCULATE_WAGE(){
+        int wage = 0;
+        if (map_events.at(GRASS))
+            wage += 3;
+        if (map_events.at(WATER))
+            wage+=10;
+        if (map_events.at(MARBLE))
+            wage+=1;
+        if (map_events.at(FIRE))
+            wage+=100;
 
-std::vector<related_n> related_nodes;  //edge value
+        return wage;
+    }
 
 
 };

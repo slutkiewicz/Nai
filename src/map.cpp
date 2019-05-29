@@ -35,6 +35,37 @@
   }
 
 
+  void setup_Bots(game_state_t* level){
+
+      position_t start_bot_1={2,13};
+      position_t goal_bot_1={30,13};
+
+      position_t start_bot_2={30,14};
+      position_t goal_bot_2={2,14};
+
+      if(level->players.at(1).intention.empty())
+      {
+          level->players.at(1).intention = position_mapper(
+                  level->players.at(1).position == start_bot_1 ?
+                  A_Star(node_mapper(start_bot_1, level),node_mapper(goal_bot_1, level))
+                                                              : A_Star(node_mapper(goal_bot_1, level), node_mapper(start_bot_1, level)));
+
+      }
+      if(level->players.at(2).intention.empty())
+      {
+          level->players.at(2).intention = position_mapper(
+                  level->players.at(2).position == start_bot_2 ?
+                  A_Star(node_mapper(start_bot_2, level),node_mapper(goal_bot_2, level))
+                                                              : A_Star(node_mapper(goal_bot_2, level), node_mapper(start_bot_2, level)));
+
+
+
+      }
+  }
+void update_Wage(){
+
+  }
+
 //const int tile_size[] = {32, 32};
 const int tile_size[] = {16, 16};
 
@@ -43,48 +74,27 @@ int main(int, char **) {
     using namespace std;
     using namespace std::chrono;
     srand(time(NULL));
+    const int FPS = 30;
+    const int frameDelay= 1000/FPS;
 
-    position_t start_bot_1={2,13};
-    position_t goal_bot_1={30,13};
-
-    position_t start_bot_2={30,14};
-    position_t goal_bot_2={2,14};
+    Uint32  frameStart;
+    int frameTime;
 
     auto hardware = init_hardware_subsystems(640, 480, false);
-
     auto level = load_level();    //game state
 
 
     // auto dt = 15ms;
     milliseconds dt(15);
 
-    steady_clock::time_point current_time = steady_clock::now();
+    //steady_clock::time_point current_time = steady_clock::now();
 
-    for (bool game_active = true; game_active;) {
+    for (bool game_active = true; game_active;)
+    {
+        frameStart=SDL_GetTicks();
 
+        setup_Bots(&level);
 
-
-
-
-        if(level.players.at(1).intention.empty())
-        {
-            level.players.at(1).intention = position_mapper(
-                    level.players.at(1).position == start_bot_1 ?
-                    A_Star(node_mapper(start_bot_1, &level),node_mapper(goal_bot_1, &level))
-                    : A_Star(node_mapper(goal_bot_1, &level), node_mapper(start_bot_1, &level)));
-
-
-        }
-        if(level.players.at(2).intention.empty())
-        {
-            level.players.at(2).intention = position_mapper(
-                    level.players.at(2).position == start_bot_2 ?
-                    A_Star(node_mapper(start_bot_2, &level),node_mapper(goal_bot_2, &level))
-                    : A_Star(node_mapper(goal_bot_2, &level), node_mapper(start_bot_2, &level)));
-
-
-
-        }
         auto intentions = process_input(
                 hardware,
                 {{event_enum::QUIT, [&]() { game_active = false; }}});
@@ -93,8 +103,12 @@ int main(int, char **) {
                                           (double) (dt.count()) / 1000.0);
 
         draw_world(hardware->renderer, level);
+        frameTime = SDL_GetTicks() - frameStart;
 
-        this_thread::sleep_until(current_time = current_time + dt);
+        if(frameDelay > frameTime)
+            SDL_Delay(frameDelay-frameTime);
+
+        //this_thread::sleep_until(current_time = current_time + dt);
     }
 
     return 0;
@@ -290,7 +304,10 @@ process_input(std::shared_ptr<hardware_objects_t> hw,
         intentions.second=MARBLE;
     if (kstate[SDL_SCANCODE_G])
         intentions.second=GRASS;
-
+    if (kstate[SDL_SCANCODE_F])
+        intentions.second=FIRE;
+    if (kstate[SDL_SCANCODE_F])
+        intentions.second=WATER;
 
 
     return intentions;
@@ -305,15 +322,15 @@ calculate_next_game_state(const game_state_t &previous_state,
                           std::pair<position_t,game_enum > intentions,double dt) {
     game_state_t ret = previous_state;
 ///move pointer with map borders checking
-    if (!(ret.players.at(0).position.at(0) > (ret.world->t.at(0).size() ) ||
-          ret.players.at(0).position.at(1) > (ret.world->t.size() ) ||
-          ret.players.at(0).position.at(0) < 0 ||
-          ret.players.at(0).position.at(1) < 0)) {
-
     intentions.first.at(0) += ret.pointer.position.first.at(0);
     intentions.first.at(1) += ret.pointer.position.first.at(1);
 
-    ret.pointer.position.first=intentions.first;
+    if (intentions.first.at(0) > (ret.world->t.at(0).size()-1) ||
+        intentions.first.at(1) > (ret.world->t.size()-1) ||
+        intentions.first.at(0) < 0 ||
+        intentions.first.at(1) < 0) {}
+    else {
+        ret.pointer.position.first = intentions.first;
     }
 ///make user pointer interaction
 
@@ -331,6 +348,7 @@ calculate_next_game_state(const game_state_t &previous_state,
         else {      ///FIELD ENUM MODIFICATION
             ret.world->nodes_Map.at(intentions.first).map_events.at(intentions.second)
                     = !ret.world->nodes_Map.at(intentions.first).map_events.at(intentions.second);
+
         }
 
     }

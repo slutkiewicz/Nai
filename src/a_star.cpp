@@ -62,7 +62,7 @@ list<node*> A_Star(node* start,node* goal )
 
                     if (related.first->id != goal->id) {
 
-                        g_Map.insert(pair<node *, int>(related.first, g_Map.at(current) + related.second));
+                        g_Map.insert(pair<node *, int>(related.first, g_Map.at(current) + related.first->CALCULATE_WAGE()));
                         h_Map.insert(pair<node *, int>(related.first, get_heur_value(goal, related.first)));
 
                         f_Map.insert(

@@ -243,37 +243,46 @@ process_input(std::shared_ptr<hardware_objects_t> hw,
                 evnt = QUIT;
                 break;
             case SDL_KEYDOWN:
-                if (event.key.keysym.sym == SDLK_ESCAPE)
-                    evnt = QUIT;
-                break;
+                switch(event.key.keysym.sym) {
+                    case SDLK_ESCAPE:
+                        evnt = QUIT;
+                        break;
+                    case SDLK_LEFT:
+                        intentions.first[0] -= 1;
+                        break;
+                    case SDLK_RIGHT:
+                        intentions.first[0] += 1;
+                        break;
+                    case SDLK_UP:
+                        intentions.first[1] -= 1;
+                        break;
+                    case SDLK_DOWN:
+                        intentions.first[1] += 1;
+                        break;
+                    case SDLK_SPACE:
+                        intentions.second = P1_GO;
+                        break;
+                    case SDLK_w:
+                        intentions.second = WALL;
+                        break;
+                    case SDLK_m:
+                        intentions.second = MARBLE;
+                        break;
+                    case SDLK_g:
+                        intentions.second = GRASS;
+                        break;
+                    case SDLK_f:
+                        intentions.second = FIRE;
+                        break;
+                    case SDLK_e:
+                        intentions.second = WATER;
+                        break;
+                }break;
+
         }
         if (event_handlers.count(evnt))
             event_handlers[evnt]();
     }
-
-
-    auto kstate = SDL_GetKeyboardState(NULL);
-    if (kstate[SDL_SCANCODE_LEFT])
-        intentions.first[0] -= 1;
-    if (kstate[SDL_SCANCODE_RIGHT])
-        intentions.first[0] += 1;
-    if (kstate[SDL_SCANCODE_UP])
-        intentions.first[1] -= 1;
-    if (kstate[SDL_SCANCODE_DOWN])
-        intentions.first[1] += 1;
-
-    if (kstate[SDL_SCANCODE_SPACE])
-        intentions.second=P1_GO;
-    if (kstate[SDL_SCANCODE_W])
-        intentions.second=WALL;
-    if (kstate[SDL_SCANCODE_M])
-        intentions.second=MARBLE;
-    if (kstate[SDL_SCANCODE_G])
-        intentions.second=GRASS;
-    if (kstate[SDL_SCANCODE_F])
-        intentions.second=FIRE;
-    if (kstate[SDL_SCANCODE_F])
-        intentions.second=WATER;
 
 
     return intentions;
@@ -341,7 +350,7 @@ calculate_next_game_state(const game_state_t &previous_state,
                 {///move somwhere else
 
                     auto goal = player.intention.front();
-                    node* n;
+                    node* n = nullptr;
 
                     if(ret.world->nodes_Map.at({player.position.at(0)+1,player.position.at(1)}).AVAILABLE())
                         n=&ret.world->nodes_Map.at({player.position.at(0)+1,player.position.at(1)});
@@ -359,20 +368,29 @@ calculate_next_game_state(const game_state_t &previous_state,
                                 }
                             }
                         }
-                    auto start = n;
+                    if(n== nullptr)
+                        player.intention.push_back(player.position);
 
-                    ret.world->nodes_Map.at(player.position).map_events.at(PLAYER) = false;
-                    player.position = n->position;
-                    ret.world->nodes_Map.at(player.position).map_events.at(PLAYER) = true;
-
-                    auto new_list=position_mapper(A_Star(start, node_mapper(goal, &ret)));
-                    if(!new_list.empty())   ///if cant go wait a sec
-                    {
-                        player.intention.clear();
-                        player.intention=new_list;
-                    }
                     else
-                        player.intention.push_back(n->position);
+                        {
+                        auto start = n;
+
+                        ret.world->nodes_Map.at(player.position).map_events.at(PLAYER) = false;
+                        player.position = n->position;
+                        ret.world->nodes_Map.at(player.position).map_events.at(PLAYER) = true;
+
+                        auto new_list=position_mapper(A_Star(start, node_mapper(goal, &ret)));
+                        if(!new_list.empty())   ///if cant go wait a sec
+                        {
+                            player.intention.clear();
+                            player.intention=new_list;
+                        }
+                        else
+                            player.intention.push_back(n->position);
+
+                        }
+
+
 
                 }
         }
@@ -481,16 +499,13 @@ void setup_Bots(game_state_t* level){
                                                              : A_Star(node_mapper(level->players.at(1).position, level), node_mapper(start_bot_1, level)));
 
     }
-    if(level->players.at(2).intention.empty())
+   /* if(level->players.at(2).intention.empty())
     {
         level->players.at(2).intention = position_mapper(
                 level->players.at(2).position == start_bot_2 ?
                 A_Star(node_mapper( level->players.at(2).position, level),node_mapper(goal_bot_2, level))
                                                              : A_Star(node_mapper( level->players.at(2).position, level), node_mapper(start_bot_2, level)));
-
-
-
-    }
+    }*/
 }
 
 

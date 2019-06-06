@@ -499,13 +499,13 @@ void setup_Bots(game_state_t* level){
                                                              : A_Star(node_mapper(level->players.at(1).position, level), node_mapper(start_bot_1, level)));
 
     }
-   /* if(level->players.at(2).intention.empty())
+    if(level->players.at(2).intention.empty())
     {
         level->players.at(2).intention = position_mapper(
                 level->players.at(2).position == start_bot_2 ?
                 A_Star(node_mapper( level->players.at(2).position, level),node_mapper(goal_bot_2, level))
                                                              : A_Star(node_mapper( level->players.at(2).position, level), node_mapper(start_bot_2, level)));
-    }*/
+    }
 }
 
 
